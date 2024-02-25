@@ -710,6 +710,7 @@ endstruc
 %define SYS_GETDENTS 0x8d 
 %define SYS_MREMAP 0xa3
 %define SYS_PRCTL 0xac
+%define SYS_GETCWD 0xb7
 %define SYS_GETUID 0xc7
 %define SYS_SOCKET 0x167
 %define SYS_BIND 0x169

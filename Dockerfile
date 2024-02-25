@@ -1,4 +1,5 @@
-FROM debian:bullseye
+ARG LAB_IMAGE=debian:bullseye
+FROM $LAB_IMAGE
 
 COPY . /virus
 
@@ -14,10 +15,7 @@ RUN apt-get install -y \
     sudo \
     file \
     gcc \
-    gcc-multilib \
-    curl \
-    wget \
-    systemctl
+    gcc-multilib
 RUN useradd -ms /bin/bash user
 RUN echo 'root:docker' | chpasswd
 RUN echo 'user:docker' | chpasswd

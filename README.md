@@ -45,22 +45,34 @@ Otherwise, our virus would be detected. After being infected, the targeted file 
 
 Before infecting a system, the virus will also check for the presence of any debugger. If a debugger is detected, it will print the message `[DEBUGGER IS RUNNING...]` and exit. Following this, the program will be decrypted, and it will check if any of the following processes are running: `cat`, `vim`, or `grep`. If any of these processes are detected, the infection will not proceed.
 
+<p align="center">
+  <img src="./.image/demo_debugging.png" alt="Virus Anti-Debugger">
+  <img src="./.image/demo_debugging2.png" alt="Virus Anti-Debugger ls">
+</p>
+
 ## ⚙️ How it works
 
 Again, I will only explain how the new mandatory features of Pestilence work. To understand how the virus infects other files, please refer to the [Famine](https://github.com/mathias-mrsn/famine) repository.
 
 Let's start with the anti-debugging techniques. The first one involves a `/proc/status/self` check. The program will open the file and then check the `TracerPID:` line. If this line isn't set to 0, it indicates that a tracer process like `strace` or `gdb` is running, and the virus stops.
 
-The second anti-debugging technique is the time-check technique. This involves running a loop 50000 times and comparing the time at the beginning of the loop with the time at the end. If the result is too high, it suggests that a debugger may be running, especially `gdb`.
-
-The third technique is the environment variable check. In `gdb`, when the program is running, two environment variables are set: `COLUMNS` and `LINES`. If these variables are set, most of the time, it indicates that a debugger is running.
+The second technique is the environment variable check. In `gdb`, when the program is running, two environment variables are set: `COLUMNS` and `LINES`. If these variables are set, most of the time, it indicates that a debugger is running.
 
 The final check involves a ptrace check. The virus will fork a process to attach to it, and the PTRACE_ATTACH will return (-1) if the process is already attached to GDB.
 
-<p align="center">
-  <img src="./.image/demo_debugging.png" alt="Virus Anti-Debugger">
-  <img src="./.image/demo_debugging2.png" alt="Virus Anti-Debugger ls">
-</p>
+**Warning**: Some VMs or containers may have limitations on the usage of `ptrace`. This limitation restricts the `ptrace` attachment from a child to its parent. If the virus consistently displays the debugging message, you have two options. First, disable this limitation by opening the file `/etc/sysctl.d/10-ptrace.conf` and changing the line `kernel.yama.ptrace_scope = 1` to `kernel.yama.ptrace_scope = 0`. If the file doesn't exist, you can use this command:
+
+```bash
+$ echo "0" | sudo tee /proc/sys/kernel/yama/ptrace_scope
+```
+
+If, for security reasons, you don't want to change it, you can compile the virus with this command:
+
+```bash
+$ make DISABLE_PTRACE=on
+```
+
+And the ptrace check will be removed.
 
 Now let's revisit Pestilence's features. The second one is `conditional execution`. This technique is employed to conceal the virus's execution and introduce more randomness.
 
@@ -126,13 +138,11 @@ Our virus implements a packing algorithm called `lzss`. This algorithm is design
 
 To make our virus even more impactful, we decided to implement a backdoor routine. This routine is executed after decryption and is designed to initiate a malicious process on your machine, which can be highly advantageous for an unauthorized person seeking access or to exploit your machine for financial gain.
 
-The backdoor routine first checks if you are the root user. If not, the virus will open a port in a separate process and listen for incoming requests on this port. Each request sent to this port will be redirected to a bash process, creating a reverse shell with the same privileges as the executor.
+The backdoor routine is a reverse shell, the virus will open a port in a separate process and listen for incoming requests on this port. Each request sent to this port will be redirected to a bash process, creating a reverse shell with the same privileges as the executor.
 
 <p align="center">
-  <img src="./.image/demo_bd_user.png" alt="Virus 32bits">
+  <img src="./.image/demo_bd_user.png" alt="Virus backdoor">
 </p>
-
-If the user is the root user, the process will redirect `stdin`, `stdout`, and `stderr` to `/dev/null`. Subsequently, it will run a Minero miner on the targeted machine.
 
 </details>
 

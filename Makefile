@@ -1,6 +1,7 @@
 NAME	=	Pestilence
 ARCH 	= 	x86_64
 ENABLE_DEBUGGING = off
+DISABLE_PTRACE = off
 
 SRCS_ASM = 	_start.asm
 
@@ -25,6 +26,10 @@ _END= $'\033[37m
 
 ifeq ($(ENABLE_DEBUGGING), on)
 	AFLAGS += -D ENABLE_DEBUGGING
+endif
+
+ifeq ($(DISABLE_PTRACE), on)
+	AFLAGS += -D DISABLE_PTRACE
 endif
 	
 ifeq ($(ARCH),x86_32)
@@ -77,7 +82,7 @@ re:			fclean all
 lab:	all
 	@printf "%-15s ${_GREEN}${_BOLD}lab${_END}...\n" "Running"
 	@docker build --tag virus_lab_image .
-	@docker run --name virus_lab --init -d virus_lab_image
+	@docker run --name virus_lab --init --cap-add=SYS_PTRACE -d virus_lab_image
 	@docker cp ${HOME} virus_lab:/home
 	@docker exec -it virus_lab "/bin/bash"
 
@@ -86,6 +91,19 @@ rmlab:
 	@docker container stop virus_lab
 	@docker container rm virus_lab
 	@docker image rm virus_lab_image
+
+lab32:	all
+	@printf "%-15s ${_GREEN}${_BOLD}lab${_END}...\n" "Running"
+	@docker build --tag virus_lab32_image --build-arg LAB_IMAGE=i386/debian .
+	@docker run --name virus_lab32 --init --cap-add=SYS_PTRACE -d virus_lab32_image
+	@docker cp ${HOME} virus_lab32:/home
+	@docker exec -it virus_lab32 "/bin/bash"
+
+rmlab32:
+	@printf "%-15s ${_GREEN}${_BOLD}deleting lab${_END}...\n" "Running"
+	@docker container stop virus_lab32
+	@docker container rm virus_lab32
+	@docker image rm virus_lab32_image
 
 help:
 	@echo "Available make rules:"
