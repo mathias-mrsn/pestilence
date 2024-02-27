@@ -15,7 +15,8 @@ RUN apt-get install -y \
     sudo \
     file \
     gcc \
-    gcc-multilib
+    gcc-multilib \
+    netcat
 RUN useradd -ms /bin/bash user
 RUN echo 'root:docker' | chpasswd
 RUN echo 'user:docker' | chpasswd
